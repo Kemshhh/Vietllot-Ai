@@ -89,9 +89,14 @@ export default function AIView({
     setGeminiExplanation('');
     setErrorExplain('');
     try {
+      const apiKey = localStorage.getItem('gemini_api_key') || '';
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (apiKey) {
+        headers['x-gemini-api-key'] = apiKey;
+      }
       const response = await fetch('/api/gemini/explain', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           numbers,
           game_type: gameType,

@@ -31,6 +31,12 @@ export default function SettingsView({
   const [isPremiumUnlocked, setIsPremiumUnlocked] = useState<boolean>(false);
   const [apiToken, setApiToken] = useState<string>('v_ai_pub_9a1f4b8c9d2e1a3b');
   const [showToast, setShowToast] = useState<boolean>(false);
+  const [geminiKey, setGeminiKey] = useState<string>('');
+
+  useEffect(() => {
+    const savedKey = localStorage.getItem('gemini_api_key') || '';
+    setGeminiKey(savedKey);
+  }, []);
 
   useEffect(() => {
     if (initialConfig) {
@@ -65,6 +71,7 @@ export default function SettingsView({
   };
 
   const handleSubmitConfig = async () => {
+    localStorage.setItem('gemini_api_key', geminiKey.trim());
     await onSaveConfig({
       id: initialConfig?.id || 'noti_1',
       email,
@@ -219,6 +226,39 @@ export default function SettingsView({
               {favNumbers.length === 0 && (
                 <span className="text-[10.5px] text-slate-500 italic">Chưa thêm số ưa thích nào.</span>
               )}
+            </div>
+          </div>
+
+          {/* Gemini API Key config */}
+          <div className="border-t border-slate-800/80 pt-4 space-y-3">
+            <label className="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-amber-500" />
+              Cấu hình Gemini API Key cá nhân:
+            </label>
+            <p className="text-[10px] text-slate-500 leading-normal">
+              Nhập API Key của bạn để sử dụng tính năng giải nghĩa bộ số bằng mô hình AI tiên tiến (Gemini 3.5 Flash). Key của bạn được lưu trữ an toàn trong trình duyệt cục bộ.
+            </p>
+            <div className="relative flex items-center">
+              <input
+                id="input-gemini-api-key"
+                type="password"
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="Nhập Gemini API Key (AIzaSy...)"
+                className="w-full pl-3 pr-24 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+              <button
+                id="btn-save-gemini-key-inline"
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('gemini_api_key', geminiKey.trim());
+                  setShowToast(true);
+                  setTimeout(() => setShowToast(false), 3000);
+                }}
+                className="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/20 rounded-lg text-[10px] font-bold transition-all"
+              >
+                Lưu Key
+              </button>
             </div>
           </div>
         </div>

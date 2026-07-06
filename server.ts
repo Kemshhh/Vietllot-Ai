@@ -20,12 +20,24 @@ const db = new VietlottDatabase();
 
 // Lazy Gemini API Client Initialization
 let aiClient: GoogleGenAI | null = null;
-function getGeminiClient(): GoogleGenAI {
+function getGeminiClient(customKey?: string): GoogleGenAI {
+  const key = customKey || process.env.GEMINI_API_KEY;
+  if (!key || key === 'MY_GEMINI_API_KEY') {
+    throw new Error('Missing GEMINI_API_KEY. Vui lòng cấu hình API Key trong mục Cài đặt.');
+  }
+  
+  if (customKey) {
+    return new GoogleGenAI({
+      apiKey: customKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
+  }
+
   if (!aiClient) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key || key === 'MY_GEMINI_API_KEY') {
-      throw new Error('Missing GEMINI_API_KEY. Vui lòng cấu hình API Key trong mục Settings > Secrets.');
-    }
     aiClient = new GoogleGenAI({
       apiKey: key,
       httpOptions: {
@@ -294,7 +306,8 @@ Hãy viết một báo cáo phân tích bằng tiếng Việt, phân bổ thành
 Hãy trả lời bằng định dạng Markdown ngắn gọn, trực quan, chuyên nghiệp, truyền cảm hứng nhưng luôn giữ tính chân thực (không cam kết chắc chắn trúng thưởng).`;
 
     try {
-      const ai = getGeminiClient();
+      const customKey = req.headers['x-gemini-api-key'] as string | undefined;
+      const ai = getGeminiClient(customKey);
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',
         contents: prompt,
