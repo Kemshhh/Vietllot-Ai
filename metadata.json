@@ -1,0 +1,8 @@
+{
+  "name": "Vietlott AI Analytics",
+  "description": "Nền tảng phân tích thống kê chuyên sâu và gợi ý bộ số Vietlott áp dụng mô hình phân tích dữ liệu và AI",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

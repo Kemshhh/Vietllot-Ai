@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Premium High-Contrast Earth & Fire (Hỏa - Thổ) Feng Shui Palette */
+  --color-slate-950: #080504; /* Deep volcanic obsidian / earth magma */
+  --color-slate-900: #100a08; /* Dark terracotta rock */
+  --color-slate-850: #1a100d; /* Warm baked clay */
+  --color-slate-800: #241612; /* Rich soil charcoal */
+  --color-slate-700: #331f1a; /* Warm earth brown */
+  --color-slate-600: #4a2f27; /* Hearth embers wood-brown */
+  --color-slate-500: #6b473b; /* Dusty terracotta taupe */
+  --color-slate-400: #9c6c5c; /* Warm baked sand */
+  --color-slate-300: #cca698; /* Pale copper / linen */
+  --color-slate-200: #e7cfc6; /* Soft porcelain sand */
+  --color-slate-100: #f5e9e5; /* Warm linen bone-white */
+
+  /* Fire/Earth Orange-Amber Enhancements */
+  --color-amber-500: #f97316; /* Glowing magma orange */
+  --color-amber-400: #fb923c; /* Solar flame amber */
+  --color-amber-300: #fdba74; /* Warm earth gold */
+}
+
+@layer base {
+  body {
+    background-color: #080504; /* Magma dark base */
+    background-image: 
+      radial-gradient(circle at 15% 15%, rgba(244, 63, 94, 0.08) 0%, rgba(0, 0, 0, 0) 45%),
+      radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.08) 0%, rgba(0, 0, 0, 0) 50%),
+      radial-gradient(circle at 50% 50%, rgba(194, 65, 12, 0.04) 0%, rgba(0, 0, 0, 0) 80%);
+    background-attachment: fixed;
+    color: #f5e9e5; /* Warm linen */
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Custom scrollbar for analytics tables and logs */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(16, 10, 8, 0.3);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(244, 63, 94, 0.45);
+}
