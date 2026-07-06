@@ -7,8 +7,13 @@ import fs from 'fs';
 import path from 'path';
 import { LotteryDraw, Prediction, NumberStat, AnalyticsSummary, GameType, NotificationSetting } from '../types.js';
 
-const DB_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DB_DIR, 'vietlott_db.json');
+let DB_DIR = path.join(process.cwd(), 'data');
+let DB_FILE = path.join(DB_DIR, 'vietlott_db.json');
+
+if (process.env.VERCEL) {
+  DB_DIR = '/tmp/data';
+  DB_FILE = path.join(DB_DIR, 'vietlott_db.json');
+}
 
 interface Schema {
   draws: LotteryDraw[];
@@ -60,18 +65,39 @@ export class VietlottDatabase {
   }
 
   private load() {
-    if (!fs.existsSync(DB_DIR)) {
-      fs.mkdirSync(DB_DIR, { recursive: true });
-    }
+    try {
+      if (!fs.existsSync(DB_DIR)) {
+        fs.mkdirSync(DB_DIR, { recursive: true });
+      }
 
-    if (fs.existsSync(DB_FILE)) {
-      try {
-        const raw = fs.readFileSync(DB_FILE, 'utf-8');
-        this.schema = JSON.parse(raw);
-        console.log(`Loaded ${this.schema.draws.length} draws from database.`);
-        return;
-      } catch (err) {
-        console.error('Error parsing database file, regenerating...', err);
+      if (fs.existsSync(DB_FILE)) {
+        try {
+          const raw = fs.readFileSync(DB_FILE, 'utf-8');
+          this.schema = JSON.parse(raw);
+          console.log(`Loaded ${this.schema.draws.length} draws from database.`);
+          return;
+        } catch (err) {
+          console.error('Error parsing database file, regenerating...', err);
+        }
+      }
+    } catch (err) {
+      console.error('Database load failed, falling back to /tmp/data or memory:', err);
+      // Try falling back to /tmp/data if not already there
+      if (DB_DIR !== '/tmp/data') {
+        DB_DIR = '/tmp/data';
+        DB_FILE = path.join(DB_DIR, 'vietlott_db.json');
+        try {
+          if (!fs.existsSync(DB_DIR)) {
+            fs.mkdirSync(DB_DIR, { recursive: true });
+          }
+          if (fs.existsSync(DB_FILE)) {
+            const raw = fs.readFileSync(DB_FILE, 'utf-8');
+            this.schema = JSON.parse(raw);
+            return;
+          }
+        } catch (innerErr) {
+          console.error('Fallback load failed:', innerErr);
+        }
       }
     }
 
@@ -84,6 +110,20 @@ export class VietlottDatabase {
       fs.writeFileSync(DB_FILE, JSON.stringify(this.schema, null, 2), 'utf-8');
     } catch (err) {
       console.error('Failed to write database file:', err);
+      // If writing to DB_FILE fails (e.g., EROFS), try writing to /tmp/data
+      if (DB_DIR !== '/tmp/data') {
+        DB_DIR = '/tmp/data';
+        DB_FILE = path.join(DB_DIR, 'vietlott_db.json');
+        try {
+          if (!fs.existsSync(DB_DIR)) {
+            fs.mkdirSync(DB_DIR, { recursive: true });
+          }
+          fs.writeFileSync(DB_FILE, JSON.stringify(this.schema, null, 2), 'utf-8');
+          console.log('Saved database to fallback /tmp/data');
+        } catch (innerErr) {
+          console.error('Failed to write database file to fallback /tmp/data as well:', innerErr);
+        }
+      }
     }
   }
 

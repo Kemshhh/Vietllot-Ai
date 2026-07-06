@@ -407,6 +407,12 @@ app.get('/api/export', (req, res) => {
 // ==================== VITE MIDDLEWARE SETUP ====================
 
 async function startServer() {
+  if (process.env.VERCEL) {
+    // On Vercel, we don't start a local listener and do not need Vite development middleware.
+    // Vercel routes /api requests to the serverless function and serves static files through CDN.
+    return;
+  }
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -427,3 +433,5 @@ async function startServer() {
 }
 
 startServer();
+
+export default app;
