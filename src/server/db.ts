@@ -304,6 +304,34 @@ export class VietlottDatabase {
     return newDraw;
   }
 
+  public upsertRealDraw(draw: Omit<LotteryDraw, 'created_at'> & { id: string }): LotteryDraw {
+    const existingIndex = this.schema.draws.findIndex(
+      (d) => d.game_type === draw.game_type && d.draw_number === draw.draw_number
+    );
+
+    let finalDraw: LotteryDraw;
+    if (existingIndex !== -1) {
+      // Update existing
+      finalDraw = {
+        ...this.schema.draws[existingIndex],
+        ...draw,
+      };
+      this.schema.draws[existingIndex] = finalDraw;
+    } else {
+      // Insert new
+      finalDraw = {
+        ...draw,
+        created_at: new Date().toISOString(),
+      };
+      this.schema.draws.push(finalDraw);
+    }
+
+    // Sort chronologically
+    this.schema.draws.sort((a, b) => new Date(a.draw_date).getTime() - new Date(b.draw_date).getTime());
+    this.save();
+    return finalDraw;
+  }
+
   // Calculate statistics for a given game type up to a certain date or up to the latest draw
   public calculateStats(gameType: GameType, limitCount: number = 100): NumberStat[] {
     const draws = this.getDraws(gameType);

@@ -10,6 +10,7 @@ import StatsView from './components/StatsView.js';
 import AIView from './components/AIView.js';
 import HistoryView from './components/HistoryView.js';
 import SettingsView from './components/SettingsView.js';
+import SyncStatusWidget from './components/SyncStatusWidget.js';
 import { Home, BarChart2, Brain, History, Settings, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -213,6 +214,9 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 p-5 md:p-8 max-w-7xl mx-auto w-full">
+        {/* Sync Status Widget */}
+        <SyncStatusWidget onSyncSuccess={() => fetchAllData(gameType)} />
+
         {/* Sync Indicator/Loader overlay */}
         {isLoading && draws.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-40 text-slate-400">

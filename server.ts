@@ -9,6 +9,8 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { VietlottDatabase } from './src/server/db.js';
 import { GameType } from './src/types.js';
+import { SyncService } from './src/server/crawler/sync.js';
+import cron from 'node-cron';
 
 const app = express();
 const PORT = 3000;
@@ -17,6 +19,40 @@ app.use(express.json());
 
 // Initialize Database
 const db = new VietlottDatabase();
+
+// Sync state tracking
+let lastSyncTime: string | null = null;
+let lastSyncStatus: 'success' | 'failed' | 'running' | 'idle' = 'idle';
+let lastSyncError: string | null = null;
+const syncService = new SyncService();
+
+async function runSync() {
+  if (lastSyncStatus === 'running') return;
+  lastSyncStatus = 'running';
+  try {
+    console.log('[SYNC] Starting scheduled/triggered sync...');
+    const results = await syncService.syncAll(db);
+    lastSyncTime = new Date().toISOString();
+    const failed = results.some(r => !r.success);
+    if (failed) {
+      lastSyncStatus = 'failed';
+      lastSyncError = results.map(r => r.error).filter(Boolean).join('; ');
+    } else {
+      lastSyncStatus = 'success';
+      lastSyncError = null;
+    }
+    console.log('[SYNC] Sync finished:', results);
+  } catch (e: any) {
+    lastSyncStatus = 'failed';
+    lastSyncError = e.message || String(e);
+    console.error('[SYNC] Global sync failure:', e);
+  }
+}
+
+// Schedule sync process: Run every 3 hours
+cron.schedule('0 */3 * * *', () => {
+  runSync();
+});
 
 // Lazy Gemini API Client Initialization
 let aiClient: GoogleGenAI | null = null;
@@ -51,6 +87,38 @@ function getGeminiClient(customKey?: string): GoogleGenAI {
 }
 
 // ==================== API ROUTES ====================
+
+// Sync API Endpoints
+app.post('/api/sync', async (req, res) => {
+  try {
+    if (lastSyncStatus === 'running') {
+      return res.status(409).json({ error: 'Quá trình đồng bộ đang diễn ra, vui lòng đợi.' });
+    }
+    await runSync();
+    res.json({
+      message: 'Đồng bộ kết quả thành công',
+      status: lastSyncStatus,
+      last_sync_time: lastSyncTime,
+      error: lastSyncError
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/sync/status', (req, res) => {
+  try {
+    res.json({
+      status: lastSyncStatus,
+      last_sync_time: lastSyncTime,
+      error: lastSyncError,
+      mega_draws_count: db.getDraws('Mega 6/45').length,
+      power_draws_count: db.getDraws('Power 6/55').length,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // 1. Get Draw History
 app.get('/api/results', (req, res) => {
@@ -429,6 +497,8 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+    // Trigger sync on server startup asynchronously
+    runSync().catch(err => console.error('[STARTUP] Initial sync failed:', err));
   });
 }
 
